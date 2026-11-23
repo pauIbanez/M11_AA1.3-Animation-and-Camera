@@ -5,45 +5,83 @@ using UnityEngine.Events;
 
 public class GenericGun : MonoBehaviour
 {
-    [Header("Weapon")]
-    public int clipMax = 30;
-    public int clipCurrent = 30;
-    public bool automatic = true;
-    [Min(1f/60f)]
-    public float fireRate = 0.1f;
-    public float reloadTime = 0.5f;
-    [Header("Firing")]
-    public UnityEvent onFire;
-    public Transform firePoint;
-    public GameObject bullet;
-    [Header("Animation")]
-    public float positionRecover;
-    public float rotationRecover;
-    public Vector3 knockbackPosition;
-    public Vector3 knockbackRotation;
-    Vector3 originalPosition;
-    Quaternion originalRotation;
-    private void Start()
-    {
-        originalPosition = transform.localPosition;
-        originalRotation = transform.localRotation;
-    }
+  [Header("Weapon")]
+  public int clipMax = 30;
+  public int clipCurrent = 30;
+  public bool automatic = true;
+  [Min(1f / 60f)]
+  public float fireRate = 0.1f;
+  public float reloadTime = 0.5f;
+  [Header("Firing")]
+  public UnityEvent onFire;
+  public Transform firePoint;
+  public GameObject bullet;
+  [Header("Animation")]
+  public float positionRecover;
+  public float rotationRecover;
+  public Vector3 knockbackPosition;
+  public Vector3 knockbackRotation;
+  Vector3 originalPosition;
+  Quaternion originalRotation;
 
-    void Update()
+  InputSystem_Actions input;
+  float nextFireTime;
+  bool reloading;
+
+  private void Start()
+  {
+    originalPosition = transform.localPosition;
+    originalRotation = transform.localRotation;
+
+    input = new InputSystem_Actions();
+    input.Enable();
+  }
+
+  void Update()
+  {
+    transform.localPosition = Vector3.Lerp(transform.localPosition, originalPosition, positionRecover * Time.deltaTime);
+    transform.localRotation = Quaternion.Lerp(transform.localRotation, originalRotation, rotationRecover * Time.deltaTime);
+
+    if (reloading) return;
+
+    bool wantsToFire = automatic
+        ? input.Player.Attack.IsPressed()
+        : input.Player.Attack.WasPressedThisFrame();
+
+    if (wantsToFire && Time.time >= nextFireTime && clipCurrent > 0)
     {
-        transform.localPosition = Vector3.Lerp(transform.localPosition, originalPosition, positionRecover * Time.deltaTime);
-        transform.localRotation = Quaternion.Lerp(transform.localRotation, originalRotation, rotationRecover * Time.deltaTime);
+      Fire();
+      clipCurrent--;
+      nextFireTime = Time.time + fireRate;
+
+      if (clipCurrent <= 0)
+        StartCoroutine(Reload_Coroutine());
     }
-    public void Fire()
-    {
-        Destroy(Instantiate(bullet, firePoint.position, firePoint.rotation), 10);
-        onFire.Invoke();
-        StartCoroutine(Knockback_Corutine());
-    }
-    IEnumerator Knockback_Corutine()
-    {
-        yield return null;
-        transform.localPosition -= new Vector3(Random.Range(-knockbackPosition.x, knockbackPosition.x), Random.Range(0, knockbackPosition.y), Random.Range(-knockbackPosition.z, -knockbackPosition.z * .5f));
-        transform.localEulerAngles -= new Vector3(Random.Range(knockbackRotation.x * 0.5f, knockbackRotation.x), Random.Range(-knockbackRotation.y, knockbackRotation.y), Random.Range(-knockbackRotation.z, knockbackRotation.z));
-    }
+  }
+
+  IEnumerator Reload_Coroutine()
+  {
+    reloading = true;
+    yield return new WaitForSeconds(reloadTime);
+    clipCurrent = clipMax;
+    reloading = false;
+  }
+
+  public void Fire()
+  {
+    Destroy(Instantiate(bullet, firePoint.position, firePoint.rotation), 10);
+    onFire.Invoke();
+    StartCoroutine(Knockback_Corutine());
+  }
+  IEnumerator Knockback_Corutine()
+  {
+    yield return null;
+    transform.localPosition -= new Vector3(Random.Range(-knockbackPosition.x, knockbackPosition.x), Random.Range(0, knockbackPosition.y), Random.Range(-knockbackPosition.z, -knockbackPosition.z * .5f));
+    transform.localEulerAngles -= new Vector3(Random.Range(knockbackRotation.x * 0.5f, knockbackRotation.x), Random.Range(-knockbackRotation.y, knockbackRotation.y), Random.Range(-knockbackRotation.z, knockbackRotation.z));
+  }
+
+  private void OnDestroy()
+  {
+    input?.Disable();
+  }
 }
