@@ -16845,6 +16845,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 53c66411043aa1148adb16330710481a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1780671018}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 53c66411043aa1148adb16330710481a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1780671019}
     - targetCorrespondingSourceObject: {fileID: 834192292310563322, guid: 53c66411043aa1148adb16330710481a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 445148299}
@@ -17054,6 +17057,25 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1780671019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 173728722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7731e46106d688459a731f9041f9acb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aim
+  firePoint: {fileID: 545399007}
+  realAimUI: {fileID: 1591535079}
+  cam: {fileID: 963194227}
+  maxDistance: 1000
+  mask:
+    serializedVersion: 2
+    m_Bits: 55
 --- !u!1 &1793130295
 GameObject:
   m_ObjectHideFlags: 0
