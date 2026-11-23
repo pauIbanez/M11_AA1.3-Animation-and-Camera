@@ -19,6 +19,13 @@ public class CharacterAnimator : MonoBehaviour
   public float lookAtSpeed = 10;
 
   public float fallSpeedScale = 0.2f;
+
+  [Header("IK")]
+  [Range(0f, 1f)] public float lookWeight = 1f;
+  [Range(0f, 1f)] public float bodyWeight = 0.3f;
+  [Range(0f, 1f)] public float headWeight = 1f;
+  [Range(0f, 1f)] public float handsWeight = 1f;
+
   Vector3 lookat;
   private void Start()
   {
@@ -42,6 +49,22 @@ public class CharacterAnimator : MonoBehaviour
     FixLookat();
 
     gunPivot.LookAt(lookat);
+  }
+
+  private void OnAnimatorIK(int layerIndex)
+  {
+    anim.SetLookAtWeight(lookWeight, bodyWeight, headWeight, 0f, 0.5f);
+    anim.SetLookAtPosition(lookat);
+
+    anim.SetIKPositionWeight(AvatarIKGoal.RightHand, handsWeight);
+    anim.SetIKRotationWeight(AvatarIKGoal.RightHand, handsWeight);
+    anim.SetIKPosition(AvatarIKGoal.RightHand, gunRightHand.position);
+    anim.SetIKRotation(AvatarIKGoal.RightHand, gunRightHand.rotation);
+
+    anim.SetIKPositionWeight(AvatarIKGoal.LeftHand, handsWeight);
+    anim.SetIKRotationWeight(AvatarIKGoal.LeftHand, handsWeight);
+    anim.SetIKPosition(AvatarIKGoal.LeftHand, gunLeftHand.position);
+    anim.SetIKRotation(AvatarIKGoal.LeftHand, gunLeftHand.rotation);
   }
 
   private void FixLookat()
