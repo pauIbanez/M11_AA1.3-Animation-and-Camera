@@ -69,7 +69,10 @@ public class GenericGun : MonoBehaviour
 
   public void Fire()
   {
-    Destroy(Instantiate(bullet, firePoint.position, firePoint.rotation), 10);
+    GameObject bullet = BulletPool.Instance.Pool.Get();
+    bullet.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
+    bullet.SetActive(true);
+
     onFire.Invoke();
     StartCoroutine(Knockback_Corutine());
   }

@@ -19,13 +19,36 @@ public class Projectile : MonoBehaviour
   public float holeLifetime = 10f;
 
 
-  void Start()
+  void Awake()
   {
     rb = GetComponent<Rigidbody>();
-    rb.AddRelativeForce(new Vector3(Random.Range(forceMin.x, forceMax.x), Random.Range(forceMin.y, forceMax.y), Random.Range(forceMin.z, forceMax.z)));
-    Destroy(gameObject, disappearTime);
+  }
+
+  void OnEnable()
+  {
+    transform.localPosition = Vector3.zero;
+    transform.localRotation = Quaternion.identity;
+    rb.linearVelocity = Vector3.zero;
+    rb.angularVelocity = Vector3.zero;
+
+    Vector3 force = new Vector3(
+        Random.Range(forceMin.x, forceMax.x),
+        Random.Range(forceMin.y, forceMax.y),
+        Random.Range(forceMin.z, forceMax.z));
+    rb.AddForce(transform.TransformDirection(force));
+
     lastPos = transform.position;
-    transform.parent = null;
+    Invoke(nameof(Disappear), disappearTime);
+  }
+
+  void OnDisable()
+  {
+    CancelInvoke();
+  }
+
+  void Disappear()
+  {
+    gameObject.SetActive(false);
   }
 
   private void FixedUpdate()
@@ -54,6 +77,6 @@ public class Projectile : MonoBehaviour
     GameObject hole = Instantiate(spawnOnCollide, hit.point, Quaternion.LookRotation(hit.normal));
     hole.transform.SetParent(hit.transform, true);
     Destroy(hole, holeLifetime);
-    Destroy(gameObject);
+    Disappear();
   }
 }
