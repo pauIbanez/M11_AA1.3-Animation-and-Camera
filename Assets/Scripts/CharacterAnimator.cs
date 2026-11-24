@@ -4,57 +4,83 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class CharacterAnimator : MonoBehaviour
 {
-    public GroundDetector gd;
-    public CharacterMover cm;
-    public Camera cam;
-    Animator anim;
-    public float rotationScale;
-    public Transform gunPivot;
-    public Transform gunRightHand;
-    public Transform gunLeftHand;
+  public GroundDetector gd;
+  public CharacterMover cm;
+  public Camera cam;
+  Animator anim;
+  public float rotationScale;
+  public Transform gunPivot;
+  public Transform gunRightHand;
+  public Transform gunLeftHand;
 
-    [Range(0f, 1f)]
-    public float lookAtMaxAngle = 0.5f;
-    public RaycastLookAt cameraLookAt;
-    public float lookAtSpeed = 10;
-    Vector3 lookat;
-    private void Start()
+  [Range(0f, 1f)]
+  public float lookAtMaxAngle = 0.5f;
+  public RaycastLookAt cameraLookAt;
+  public float lookAtSpeed = 10;
+
+  public float fallSpeedScale = 0.2f;
+
+  [Header("IK")]
+  [Range(0f, 1f)] public float lookWeight = 1f;
+  [Range(0f, 1f)] public float bodyWeight = 0.3f;
+  [Range(0f, 1f)] public float headWeight = 1f;
+  [Range(0f, 1f)] public float handsWeight = 1f;
+
+  Vector3 lookat;
+  private void Start()
+  {
+    anim = GetComponent<Animator>();
+    if (cam == null)
     {
-        anim = GetComponent<Animator>();
-        if(cam == null)
-        {
-            cam = Camera.main;
-        }
-
-        lookat = cameraLookAt.lookingAt;
-    }
-    void Update()
-    {
-        anim.SetFloat("Sideways", cm.velocity.x);
-        anim.SetFloat("Upwards", cm.velocity.y);
-        anim.SetFloat("Forward", cm.velocity.z);
-        anim.SetFloat("Rotation", cm.velocityAngular * rotationScale);
-        anim.SetBool("Grounded", gd.grounded);
-
-        FixLookat();
-
-        gunPivot.LookAt(lookat);
+      cam = Camera.main;
     }
 
-    private void FixLookat()
-    {
-        lookat = Vector3.Lerp(lookat, cameraLookAt.lookingAt, lookAtSpeed * Time.deltaTime);
+    lookat = cameraLookAt.lookingAt;
+  }
+  void Update()
+  {
+    anim.SetFloat("Sideways", cm.velocity.x);
+    anim.SetFloat("Upwards", cm.velocity.y);
+    anim.SetFloat("Forward", cm.velocity.z);
+    anim.SetFloat("Rotation", cm.velocityAngular * rotationScale);
+    anim.SetBool("Grounded", gd.grounded);
+    anim.SetFloat("FallSpeed", Mathf.Max(1f, -cm.velocity.y * fallSpeedScale));
 
-        Vector3 forwardLookAt = (lookat - cameraLookAt.transform.position).normalized;
-        float dot = Vector3.Dot(forwardLookAt, transform.forward);
-        if (dot < lookAtMaxAngle)
-        {
-            Vector3 axis = Vector3.Cross(forwardLookAt, transform.forward);
-            float angle = Vector3.SignedAngle(forwardLookAt, transform.forward, axis);
-            float distance = Vector3.Distance(lookat, cameraLookAt.transform.position);
-            float maxAngle = Mathf.Acos(lookAtMaxAngle) * Mathf.Rad2Deg;
-            forwardLookAt = Quaternion.AngleAxis(angle > 0 ? -maxAngle : maxAngle, axis) * transform.forward;
-            lookat = cameraLookAt.transform.position + forwardLookAt * distance;
-        }
+    FixLookat();
+
+    gunPivot.LookAt(lookat);
+  }
+
+  private void OnAnimatorIK(int layerIndex)
+  {
+    anim.SetLookAtWeight(lookWeight, bodyWeight, headWeight, 0f, 0.5f);
+    anim.SetLookAtPosition(lookat);
+
+    anim.SetIKPositionWeight(AvatarIKGoal.RightHand, handsWeight);
+    anim.SetIKRotationWeight(AvatarIKGoal.RightHand, handsWeight);
+    anim.SetIKPosition(AvatarIKGoal.RightHand, gunRightHand.position);
+    anim.SetIKRotation(AvatarIKGoal.RightHand, gunRightHand.rotation);
+
+    anim.SetIKPositionWeight(AvatarIKGoal.LeftHand, handsWeight);
+    anim.SetIKRotationWeight(AvatarIKGoal.LeftHand, handsWeight);
+    anim.SetIKPosition(AvatarIKGoal.LeftHand, gunLeftHand.position);
+    anim.SetIKRotation(AvatarIKGoal.LeftHand, gunLeftHand.rotation);
+  }
+
+  private void FixLookat()
+  {
+    lookat = Vector3.Lerp(lookat, cameraLookAt.lookingAt, lookAtSpeed * Time.deltaTime);
+
+    Vector3 forwardLookAt = (lookat - cameraLookAt.transform.position).normalized;
+    float dot = Vector3.Dot(forwardLookAt, transform.forward);
+    if (dot < lookAtMaxAngle)
+    {
+      Vector3 axis = Vector3.Cross(forwardLookAt, transform.forward);
+      float angle = Vector3.SignedAngle(forwardLookAt, transform.forward, axis);
+      float distance = Vector3.Distance(lookat, cameraLookAt.transform.position);
+      float maxAngle = Mathf.Acos(lookAtMaxAngle) * Mathf.Rad2Deg;
+      forwardLookAt = Quaternion.AngleAxis(angle > 0 ? -maxAngle : maxAngle, axis) * transform.forward;
+      lookat = cameraLookAt.transform.position + forwardLookAt * distance;
     }
+  }
 }
